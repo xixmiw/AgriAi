@@ -11,14 +11,14 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppSidebar from "@/components/AppSidebar";
 import LanguageSelector from "@/components/LanguageSelector";
 import ThemeToggle from "@/components/ThemeToggle";
+import Footer from "@/components/Footer";
 import Dashboard from "@/pages/Dashboard";
 import Fields from "@/pages/Fields";
 import Livestock from "@/pages/Livestock";
 import Weather from "@/pages/Weather";
-import Recommendations from "@/pages/Recommendations";
-import Simulation from "@/pages/Simulation";
 import About from "@/pages/About";
 import AIChat from "@/pages/AIChat";
+import Profile from "@/pages/Profile";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/not-found";
 import { Loader2, Clock } from "lucide-react";
@@ -85,14 +85,11 @@ function Router() {
       <Route path="/weather">
         {() => <ProtectedRoute component={Weather} />}
       </Route>
-      <Route path="/recommendations">
-        {() => <ProtectedRoute component={Recommendations} />}
-      </Route>
       <Route path="/ai-chat">
         {() => <ProtectedRoute component={AIChat} />}
       </Route>
-      <Route path="/simulation">
-        {() => <ProtectedRoute component={Simulation} />}
+      <Route path="/profile">
+        {() => <ProtectedRoute component={Profile} />}
       </Route>
       <Route path="/about">
         {() => <ProtectedRoute component={About} />}
@@ -153,8 +150,11 @@ function AppContent() {
               </Button>
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-6">
-            <Router />
+          <main className="flex-1 overflow-auto p-6 flex flex-col">
+            <div className="flex-1">
+              <Router />
+            </div>
+            <Footer />
           </main>
         </div>
       </div>

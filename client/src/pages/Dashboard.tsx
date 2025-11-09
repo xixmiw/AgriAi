@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
 import MetricCard from '@/components/MetricCard';
 import WeatherWidget from '@/components/WeatherWidget';
-import AIRecommendationCard from '@/components/AIRecommendationCard';
-import { Wheat, Sprout, TrendingUp, Heart, Plus } from 'lucide-react';
+import SoilDataCard from '@/components/SoilDataCard';
+import UserStatsCard from '@/components/UserStatsCard';
+import { Wheat, Sprout, TrendingUp, Heart, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLocation } from 'wouter';
@@ -127,24 +128,52 @@ export default function Dashboard() {
         />
       </div>
 
+      <UserStatsCard />
+
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Card className="border-dashed">
+        <div className="lg:col-span-1">
+          <SoilDataCard 
+            fieldName={fields[0]?.name}
+            location={fields[0] ? `${fields[0].latitude}°, ${fields[0].longitude}°` : undefined}
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <WeatherWidget />
+        </div>
+        <div className="lg:col-span-1">
+          <Card className="h-full bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                {t('ai.title')}
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                AI-Ассистент
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                AI-рекомендации появятся после анализа ваших данных. Продолжайте добавлять информацию о полях и животных.
+                Ваш персональный агро-консультант готов помочь с:
               </p>
+              <ul className="text-sm space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600">✓</span>
+                  <span>Анализом урожайности</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600">✓</span>
+                  <span>Планами кормления</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600">✓</span>
+                  <span>Прогнозами и советами</span>
+                </li>
+              </ul>
+              <Button 
+                onClick={() => setLocation('/ai-chat')}
+                className="w-full bg-purple-600 hover:bg-purple-700"
+              >
+                Открыть чат
+              </Button>
             </CardContent>
           </Card>
-        </div>
-        <div>
-          <WeatherWidget />
         </div>
       </div>
     </div>

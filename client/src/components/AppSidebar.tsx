@@ -17,11 +17,10 @@ import {
   Leaf,
   Wheat,
   Cloud,
-  Sparkles,
-  Activity,
   Info,
   Sprout,
   MessageSquare,
+  UserCircle,
 } from 'lucide-react';
 
 const menuItems = [
@@ -30,8 +29,7 @@ const menuItems = [
   { path: '/livestock', icon: Sprout, labelKey: 'nav.livestock' },
   { path: '/weather', icon: Cloud, labelKey: 'nav.weather' },
   { path: '/ai-chat', icon: MessageSquare, labelKey: 'AI Чат' },
-  { path: '/recommendations', icon: Sparkles, labelKey: 'nav.recommendations' },
-  { path: '/simulation', icon: Activity, labelKey: 'nav.simulation' },
+  { path: '/profile', icon: UserCircle, labelKey: 'Профиль' },
   { path: '/about', icon: Info, labelKey: 'nav.about' },
 ];
 

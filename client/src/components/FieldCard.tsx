@@ -87,17 +87,19 @@ export default function FieldCard({
 
   return (
     <>
-      <Card className="hover-elevate" data-testid={testId}>
-        <CardHeader>
+      <Card className="hover:shadow-xl transition-all duration-300 hover:scale-105 border-2" data-testid={testId}>
+        <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950">
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle className="text-lg" data-testid={`${testId}-name`}>{name}</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2" data-testid={`${testId}-name`}>
+                {name}
+                <div className={`h-3 w-3 rounded-full ${statusColors[status]} animate-pulse`} />
+              </CardTitle>
               <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                 <MapPin className="h-3 w-3" />
                 <span data-testid={`${testId}-location`}>{location}</span>
               </div>
             </div>
-            <div className={`h-2 w-2 rounded-full ${statusColors[status]}`} />
           </div>
         </CardHeader>
         <CardContent>
