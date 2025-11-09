@@ -17,6 +17,9 @@ const translations: Translations = {
   'nav.fields': { en: 'Fields', ru: 'Поля', kk: 'Алқаптар', zh: '田地' },
   'nav.livestock': { en: 'Livestock', ru: 'Скот', kk: 'Мал', zh: '畜牧' },
   'nav.weather': { en: 'Weather', ru: 'Погода', kk: 'Ауа райы', zh: '天气' },
+  'nav.overallAnalysis': { en: 'Overall Analysis', ru: 'Общий анализ', kk: 'Жалпы талдау', zh: '总体分析' },
+  'nav.aiChat': { en: 'AI Chat', ru: 'AI Чат', kk: 'AI Чат', zh: 'AI聊天' },
+  'nav.profile': { en: 'Profile', ru: 'Профиль', kk: 'Профиль', zh: '个人资料' },
   'nav.recommendations': { en: 'AI Recommendations', ru: 'AI Рекомендации', kk: 'AI Ұсыныстар', zh: 'AI建议' },
   'nav.simulation': { en: 'Health Simulation', ru: 'Симуляция', kk: 'Симуляция', zh: '健康模拟' },
   'nav.about': { en: 'About', ru: 'О приложении', kk: 'Қосымша туралы', zh: '关于' },
@@ -85,18 +88,13 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('language');
-    return (saved as Language) || 'ru';
-  });
+  const language: Language = 'ru';
 
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    localStorage.setItem('language', lang);
   };
 
   const t = (key: string): string => {
-    return translations[key]?.[language] || key;
+    return translations[key]?.ru || key;
   };
 
   return (

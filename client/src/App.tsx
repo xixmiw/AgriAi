@@ -9,7 +9,6 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppSidebar from "@/components/AppSidebar";
-import LanguageSelector from "@/components/LanguageSelector";
 import ThemeToggle from "@/components/ThemeToggle";
 import Footer from "@/components/Footer";
 import Dashboard from "@/pages/Dashboard";
@@ -19,6 +18,7 @@ import Weather from "@/pages/Weather";
 import About from "@/pages/About";
 import AIChat from "@/pages/AIChat";
 import Profile from "@/pages/Profile";
+import OverallAnalysis from "@/pages/OverallAnalysis";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/not-found";
 import { Loader2, Clock } from "lucide-react";
@@ -88,6 +88,9 @@ function Router() {
       <Route path="/ai-chat">
         {() => <ProtectedRoute component={AIChat} />}
       </Route>
+      <Route path="/overall-analysis">
+        {() => <ProtectedRoute component={OverallAnalysis} />}
+      </Route>
       <Route path="/profile">
         {() => <ProtectedRoute component={Profile} />}
       </Route>
@@ -143,7 +146,6 @@ function AppContent() {
               <span className="text-sm text-muted-foreground">
                 {user.fullName || user.username} ({user.role})
               </span>
-              <LanguageSelector />
               <ThemeToggle />
               <Button variant="outline" size="sm" onClick={logout}>
                 Выход

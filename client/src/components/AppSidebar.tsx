@@ -21,6 +21,7 @@ import {
   Sprout,
   MessageSquare,
   UserCircle,
+  Activity,
 } from 'lucide-react';
 
 const menuItems = [
@@ -28,6 +29,7 @@ const menuItems = [
   { path: '/fields', icon: Wheat, labelKey: 'nav.fields' },
   { path: '/livestock', icon: Sprout, labelKey: 'nav.livestock' },
   { path: '/weather', icon: Cloud, labelKey: 'nav.weather' },
+  { path: '/overall-analysis', icon: Activity, labelKey: 'nav.overallAnalysis' },
   { path: '/ai-chat', icon: MessageSquare, labelKey: 'nav.aiChat' },
   { path: '/profile', icon: UserCircle, labelKey: 'nav.profile' },
   { path: '/about', icon: Info, labelKey: 'nav.about' },

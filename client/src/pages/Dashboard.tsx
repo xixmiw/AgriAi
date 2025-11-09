@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
 import MetricCard from '@/components/MetricCard';
 import SoilDataCard from '@/components/SoilDataCard';
-import UserStatsCard from '@/components/UserStatsCard';
 import { Wheat, Sprout, TrendingUp, Heart, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -83,12 +82,12 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold" data-testid="title-dashboard">
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent" data-testid="title-dashboard">
           {t('dashboard.title')}
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-lg text-muted-foreground">
           {new Date().toLocaleDateString('ru-RU', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -98,7 +97,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title={t('dashboard.totalFields')}
           value={totalFields}
@@ -127,8 +126,6 @@ export default function Dashboard() {
         />
       </div>
 
-      <UserStatsCard />
-
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="lg:col-span-1">
           <SoilDataCard 
@@ -137,34 +134,34 @@ export default function Dashboard() {
           />
         </div>
         <div className="lg:col-span-1">
-          <Card className="h-full border-2 hover:shadow-lg hover:border-purple-500/50 transition-all bg-purple-500/5">
-            <CardHeader className="border-b">
+          <Card className="h-full border-2 hover:shadow-xl hover:border-purple-500/50 transition-all duration-300 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-pink-500/10">
+            <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950">
               <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
-                <Sparkles className="h-5 w-5" />
-                AI-Ассистент
+                <Sparkles className="h-6 w-6 animate-pulse" />
+                <span className="text-xl">AI-Ассистент</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+            <CardContent className="space-y-6 p-6">
+              <p className="text-base text-muted-foreground leading-relaxed">
                 Ваш персональный агро-консультант готов помочь с:
               </p>
-              <ul className="text-sm space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600">✓</span>
-                  <span>Анализом урожайности</span>
+              <ul className="text-sm space-y-3">
+                <li className="flex items-start gap-3 p-2 rounded-lg hover:bg-purple-100/50 dark:hover:bg-purple-900/20 transition-colors">
+                  <span className="text-green-600 text-lg font-bold">✓</span>
+                  <span className="text-base">Анализом урожайности</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600">✓</span>
-                  <span>Планами кормления</span>
+                <li className="flex items-start gap-3 p-2 rounded-lg hover:bg-purple-100/50 dark:hover:bg-purple-900/20 transition-colors">
+                  <span className="text-green-600 text-lg font-bold">✓</span>
+                  <span className="text-base">Планами кормления</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600">✓</span>
-                  <span>Прогнозами и советами</span>
+                <li className="flex items-start gap-3 p-2 rounded-lg hover:bg-purple-100/50 dark:hover:bg-purple-900/20 transition-colors">
+                  <span className="text-green-600 text-lg font-bold">✓</span>
+                  <span className="text-base">Прогнозами и советами</span>
                 </li>
               </ul>
               <Button 
                 onClick={() => setLocation('/ai-chat')}
-                className="w-full bg-purple-600 hover:bg-purple-700"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-base py-6"
               >
                 Открыть чат
               </Button>
