@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,18 +17,53 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     fullName: user?.fullName || '',
-    email: '',
-    phone: '',
-    location: '',
-    company: '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    location: user?.location || '',
+    company: user?.company || '',
   });
 
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        fullName: user.fullName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        location: user.location || '',
+        company: user.company || '',
+      });
+    }
+  }, [user]);
+
   const handleSave = async () => {
-    toast({
-      title: t('success') || 'Успешно',
-      description: t('profile.saved') || 'Профиль обновлен',
-    });
-    setIsEditing(false);
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Не удалось обновить профиль');
+      }
+
+      const data = await response.json();
+      
+      toast({
+        title: t('success') || 'Успешно',
+        description: t('profile.saved') || 'Профиль обновлен',
+      });
+      
+      setIsEditing(false);
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: error instanceof Error ? error.message : 'Не удалось сохранить профиль',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getRoleColor = (role: string) => {

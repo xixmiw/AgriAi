@@ -42,13 +42,13 @@ export default function UserStatsCard() {
   ];
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+    <Card className="overflow-hidden border-2 hover:shadow-lg transition-shadow hover:border-purple-500/50">
+      <CardHeader className="border-b bg-purple-500/10">
         <CardTitle className="flex items-center gap-2">
           <span className="text-2xl">{getRoleIcon()}</span>
           <div>
-            <div className="text-lg">Статистика пользователя</div>
-            <div className="text-sm opacity-90">{user?.fullName || user?.username}</div>
+            <div className="text-lg text-purple-700 dark:text-purple-400">Статистика пользователя</div>
+            <div className="text-sm text-muted-foreground">{user?.fullName || user?.username}</div>
           </div>
         </CardTitle>
       </CardHeader>

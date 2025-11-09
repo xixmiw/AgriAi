@@ -51,10 +51,10 @@ export default function About() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pt-8">
         {features.map((feature, i) => (
-          <Card key={i} className="hover:shadow-xl transition-all duration-300 hover:scale-105" data-testid={`feature-${i}`}>
+          <Card key={i} className="hover:shadow-lg transition-all duration-200 border-2 hover:border-green-500/50" data-testid={`feature-${i}`}>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-500 shadow-lg">
                   <feature.icon className="h-6 w-6 text-white" />
                 </div>
                 <CardTitle className="text-lg">{feature.titleKey}</CardTitle>
@@ -68,9 +68,9 @@ export default function About() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 mt-8">
-        <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="border-2 hover:shadow-lg hover:border-purple-500/50 transition-all bg-purple-500/5">
+          <CardHeader className="border-b">
+            <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
               <Globe className="h-5 w-5" />
               Технологии
             </CardTitle>
@@ -99,9 +99,9 @@ export default function About() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950">
-          <CardHeader>
-            <CardTitle>AgriAI Pro</CardTitle>
+        <Card className="border-2 hover:shadow-lg hover:border-green-500/50 transition-all bg-green-500/5">
+          <CardHeader className="border-b">
+            <CardTitle className="text-green-700 dark:text-green-400">AgriAI Pro</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">

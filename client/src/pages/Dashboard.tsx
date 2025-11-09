@@ -141,10 +141,10 @@ export default function Dashboard() {
           <WeatherWidget />
         </div>
         <div className="lg:col-span-1">
-          <Card className="h-full bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-600" />
+          <Card className="h-full border-2 hover:shadow-lg hover:border-purple-500/50 transition-all bg-purple-500/5">
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
+                <Sparkles className="h-5 w-5" />
                 AI-Ассистент
               </CardTitle>
             </CardHeader>

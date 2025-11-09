@@ -39,11 +39,9 @@ export default function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 border-b">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary">
-            <Leaf className="h-6 w-6 text-primary-foreground" />
-          </div>
+          <img src="/logo.png" alt="AgriAI" className="w-10 h-10 rounded-md" />
           <div>
             <h2 className="text-lg font-semibold">AgriAI</h2>
             <p className="text-xs text-muted-foreground">Kazakhstan</p>

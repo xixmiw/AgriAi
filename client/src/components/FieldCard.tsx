@@ -87,8 +87,8 @@ export default function FieldCard({
 
   return (
     <>
-      <Card className="hover:shadow-xl transition-all duration-300 hover:scale-105 border-2" data-testid={testId}>
-        <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950">
+      <Card className="hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/50" data-testid={testId}>
+        <CardHeader className="border-b bg-accent/30">
           <div className="flex items-start justify-between">
             <div>
               <CardTitle className="text-lg flex items-center gap-2" data-testid={`${testId}-name`}>

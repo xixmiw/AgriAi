@@ -2,7 +2,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Plus, Minus } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface LivestockCardProps {
   id: string;
@@ -32,10 +35,34 @@ export default function LivestockCard({
   testId,
 }: LivestockCardProps) {
   const { t, language } = useLanguage();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const updateCount = useMutation({
+    mutationFn: async (newCount: number) => {
+      if (newCount < 1) return;
+      const res = await apiRequest('PATCH', `/api/livestock/${id}`, { count: newCount });
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/livestock'] });
+      toast({
+        title: 'Успешно',
+        description: 'Количество обновлено',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: error.message || 'Не удалось обновить количество',
+      });
+    },
+  });
 
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 hover:scale-105 border-2" data-testid={testId}>
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950">
+    <Card className="hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/50" data-testid={testId}>
+      <CardHeader className="border-b bg-accent/30">
         <CardTitle className="flex items-center justify-between">
           <span data-testid={`${testId}-type`}>{type}</span>
           <Badge variant={statusVariants[healthStatus]} data-testid={`${testId}-status`}>
@@ -44,10 +71,28 @@ export default function LivestockCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent" data-testid={`${testId}-count`}>
-          {count}
+        <div className="flex items-center justify-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => updateCount.mutate(count - 1)}
+            disabled={count <= 1 || updateCount.isPending}
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+          <div className="text-4xl font-bold text-primary" data-testid={`${testId}-count`}>
+            {count}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => updateCount.mutate(count + 1)}
+            disabled={updateCount.isPending}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">{t('livestock.count')}</p>
+        <p className="text-sm text-muted-foreground mt-1 text-center">{t('livestock.count')}</p>
       </CardContent>
       <CardFooter className="gap-2">
         <Button

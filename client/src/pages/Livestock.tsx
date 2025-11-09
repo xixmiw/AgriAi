@@ -12,7 +12,7 @@ interface Animal {
   id: string;
   name: string;
   tag: string;
-  health: 'healthy' | 'warning' | 'critical';
+  health: 'healthy' | 'warning' | 'critical' | 'dead';
   temperature: number;
   heartRate: number;
   activity: number;
@@ -39,21 +39,26 @@ function generateAnimalsForType(type: string, count: number): Animal[] {
   const baseHR = baseHeartRates[type] || 70;
   
   for (let i = 0; i < count; i++) {
-    let health: 'healthy' | 'warning' | 'critical' = 'healthy';
+    let health: 'healthy' | 'warning' | 'critical' | 'dead' = 'healthy';
     let temp = baseTemp + (Math.random() * 0.4 - 0.2);
     let hr = baseHR + Math.floor(Math.random() * 6 - 3);
     let activity = 85 + Math.floor(Math.random() * 10);
     
-    if (i === count - 2) {
+    if (count >= 3 && i === count - 3) {
       health = 'warning';
       temp = baseTemp + 0.7 + Math.random() * 0.5;
       hr = baseHR + 10 + Math.floor(Math.random() * 5);
       activity = 60 + Math.floor(Math.random() * 10);
-    } else if (i === count - 1) {
+    } else if (count >= 2 && i === count - 2) {
       health = 'critical';
       temp = baseTemp + 1.5 + Math.random() * 0.5;
       hr = baseHR + 25 + Math.floor(Math.random() * 10);
       activity = 35 + Math.floor(Math.random() * 15);
+    } else if (i === count - 1) {
+      health = 'dead';
+      temp = Math.round((15 + Math.random() * 3) * 10) / 10;
+      hr = 0;
+      activity = 0;
     }
     
     const prefix = type === 'Коровы' ? 'C' : 
@@ -77,6 +82,7 @@ function generateAnimalsForType(type: string, count: number): Animal[] {
 
 function AnimalCard({ animal }: { animal: Animal }) {
   const borderColor = 
+    animal.health === 'dead' ? 'border-gray-900 dark:border-gray-500 border-2 bg-gray-100 dark:bg-gray-900' :
     animal.health === 'critical' ? 'border-red-500 border-2' :
     animal.health === 'warning' ? 'border-yellow-500 border-2' :
     'border-gray-200';
@@ -87,12 +93,20 @@ function AnimalCard({ animal }: { animal: Animal }) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">{animal.name}</CardTitle>
           <Badge 
-            variant={animal.health === 'critical' ? 'destructive' : animal.health === 'warning' ? 'secondary' : 'default'}
+            variant={
+              animal.health === 'dead' ? 'destructive' :
+              animal.health === 'critical' ? 'destructive' : 
+              animal.health === 'warning' ? 'secondary' : 
+              'default'
+            }
             className="flex items-center gap-1"
           >
+            {animal.health === 'dead' && <AlertCircle className="h-3 w-3" />}
             {animal.health === 'critical' && <AlertCircle className="h-3 w-3" />}
             {animal.health === 'warning' && <AlertCircle className="h-3 w-3" />}
-            {animal.health === 'healthy' ? 'Здоров' : animal.health === 'warning' ? 'Возможно болен' : 'Болен'}
+            {animal.health === 'healthy' ? 'Здоров' : 
+             animal.health === 'warning' ? 'Возможно болен' : 
+             animal.health === 'critical' ? 'Болен' : 'Мертв'}
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground">Метка: {animal.tag}</p>
@@ -103,21 +117,27 @@ function AnimalCard({ animal }: { animal: Animal }) {
             <Thermometer className="h-4 w-4 text-orange-500" />
             Температура
           </span>
-          <span className="font-medium">{animal.temperature}°C</span>
+          <span className={`font-medium ${animal.health === 'dead' ? 'text-muted-foreground' : ''}`}>
+            {animal.temperature}°C
+          </span>
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="flex items-center gap-2">
-            <Heart className="h-4 w-4 text-red-500" />
+            <Heart className={`h-4 w-4 ${animal.health === 'dead' ? 'text-gray-400' : 'text-red-500'}`} />
             Пульс
           </span>
-          <span className="font-medium">{animal.heartRate} уд/мин</span>
+          <span className={`font-medium ${animal.health === 'dead' ? 'text-muted-foreground' : ''}`}>
+            {animal.heartRate > 0 ? `${animal.heartRate} уд/мин` : 'Нет'}
+          </span>
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-blue-500" />
             Активность
           </span>
-          <span className="font-medium">{animal.activity}%</span>
+          <span className={`font-medium ${animal.health === 'dead' ? 'text-muted-foreground' : ''}`}>
+            {animal.activity}%
+          </span>
         </div>
       </CardContent>
     </Card>
@@ -212,14 +232,14 @@ export default function LivestockPage() {
   }
 
   const simulatedAnimals: Record<string, Animal[]> = {};
-  const stats: Record<string, { total: number; healthy: number }> = {};
+  const stats: Record<string, { total: number; healthy: number; warning: number; critical: number; dead: number }> = {};
   
   availableTypes.forEach(displayType => {
     const totalCount = groupedByDisplay[displayType].reduce((sum, l) => sum + l.count, 0);
     const animals = generateAnimalsForType(displayType, totalCount);
     
     const sortedAnimals = animals.sort((a, b) => {
-      const healthOrder = { 'critical': 0, 'warning': 1, 'healthy': 2 };
+      const healthOrder = { 'dead': 0, 'critical': 1, 'warning': 2, 'healthy': 3 };
       return healthOrder[a.health] - healthOrder[b.health];
     });
     
@@ -229,6 +249,9 @@ export default function LivestockPage() {
     stats[tabValue] = {
       total: animals.length,
       healthy: animals.filter(a => a.health === 'healthy').length,
+      warning: animals.filter(a => a.health === 'warning').length,
+      critical: animals.filter(a => a.health === 'critical').length,
+      dead: animals.filter(a => a.health === 'dead').length,
     };
   });
 
@@ -269,8 +292,35 @@ export default function LivestockPage() {
           const firstItem = groupedByDisplay[displayType][0];
           const tabValue = typeMapping[firstItem.type].tabValue;
           const animals = simulatedAnimals[displayType] || [];
+          const stat = stats[tabValue] || { total: 0, healthy: 0, warning: 0, critical: 0, dead: 0 };
           return (
             <TabsContent key={displayType} value={tabValue} className="space-y-4 mt-6">
+              <Card className="border-2">
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-5 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-green-600">{stat.healthy}</div>
+                      <div className="text-xs text-muted-foreground">Здоровы</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-yellow-600">{stat.warning}</div>
+                      <div className="text-xs text-muted-foreground">Возможно болен</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-red-600">{stat.critical}</div>
+                      <div className="text-xs text-muted-foreground">Болен</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-gray-600">{stat.dead}</div>
+                      <div className="text-xs text-muted-foreground">Мертв</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-blue-600">{stat.total}</div>
+                      <div className="text-xs text-muted-foreground">Всего</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {animals.map((animal) => (
                   <AnimalCard key={animal.id} animal={animal} />

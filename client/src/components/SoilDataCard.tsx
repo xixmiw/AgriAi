@@ -22,14 +22,14 @@ export default function SoilDataCard({ fieldName, location }: SoilDataCardProps)
   const moistureStatus = getMoistureStatus(soilMoisture);
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-        <CardTitle className="flex items-center gap-2">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow border-2 hover:border-orange-500/50">
+      <CardHeader className="border-b bg-orange-500/10">
+        <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
           <Activity className="h-5 w-5" />
           Анализ почвы
         </CardTitle>
         {fieldName && (
-          <p className="text-sm opacity-90">{fieldName}</p>
+          <p className="text-sm text-muted-foreground">{fieldName}</p>
         )}
       </CardHeader>
       <CardContent className="pt-6 space-y-4">
