@@ -91,18 +91,29 @@ export async function generateFeedingPlan(livestock: {
 
 Животные: ${livestock.count} голов ${livestock.type}
 
-ЦЕЛЬ: Максимальная продуктивность при минимальных затратах.
-Укажи ТОЧНЫЕ цифры и ДЕШЕВЫЕ альтернативы дорогим кормам.
+ОБЯЗАТЕЛЬНО верни ответ ТОЛЬКО в формате JSON (без дополнительного текста):
+{
+  "summary": "Краткая сводка плана кормления",
+  "dailyFeed": [
+    {
+      "ingredient": "название корма",
+      "perAnimalKg": число_кг_на_1_голову_в_день,
+      "percentage": процент_в_рационе,
+      "costPerKg": цена_за_кг_в_тенге_или_null
+    }
+  ],
+  "feedingSchedule": ["правило 1", "правило 2", "правило 3"],
+  "nutritionTips": ["совет 1", "совет 2"],
+  "costSavings": ["экономия 1 с ценами в ₸", "экономия 2"]
+}
 
-Формат ответа (КРАТКО):
-1. СОСТАВ КОРМА (5-7 ингредиентов, ТОЧНЫЕ проценты, сумма = 100%):
-   Формат: "Пшеница: 30%, Ячмень: 25%..." и т.д.
-2. КОЛИЧЕСТВО: сколько кг на 1 животное в день (ТОЧНАЯ цифра)
-3. ГРАФИК КОРМЛЕНИЯ (3-4 правила: когда, сколько раз, как)
-4. ЭКОНОМИЯ (2-3 совета по замене дорогих кормов дешевыми аналогами)
-
-Пример: "Замените импортный протеин (150₸/кг) на местный ячмень (40₸/кг) → экономия 30%"
-Каждый пункт - ОДНО предложение с цифрами и ценами в тенге.`;
+ВАЖНО:
+- Укажи РЕАЛЬНЫЕ количества для типа животного "${livestock.type}"
+- perAnimalKg должен быть конкретным числом (например: 4.5, 3.2, 1.8)
+- Общее количество корма = perAnimalKg * ${livestock.count}
+- НЕ используй проценты для количества, только для состава рациона
+- Цены в тенге (₸), местные казахстанские корма
+- 5-7 ингредиентов в рационе`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-exp",
@@ -111,23 +122,34 @@ export async function generateFeedingPlan(livestock: {
 
     const text = response.text || "";
     
-    const percentageMatches = text.match(/([А-Яа-яA-Za-z\s]+?):\s*(\d+)%/g) || [];
-    const dailyFeed = percentageMatches.slice(0, 7).map(match => {
-      const parts = match.split(':');
-      if (parts.length < 2) return null;
-      const ingredient = parts[0].trim();
-      const percentStr = parts[1].trim();
-      const percentage = parseInt(percentStr);
-      const perAnimal = Math.round(percentage * 0.15 * 10) / 10;
-      const total = Math.round(perAnimal * livestock.count * 10) / 10;
-      return {
-        ingredient: ingredient,
-        percentage: percentage || 0,
-        amountPerAnimal: `${perAnimal} кг/день`,
-        totalAmount: `${total} кг/день (всего для ${livestock.count} голов)`,
-      };
-    }).filter(Boolean) as { ingredient: string; percentage: number; amountPerAnimal: string; totalAmount: string; }[];
-
+    // Parse JSON response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    let parsedData: any = null;
+    
+    if (jsonMatch) {
+      try {
+        parsedData = JSON.parse(jsonMatch[0]);
+      } catch (e) {
+        console.error("Error parsing JSON from AI:", e);
+      }
+    }
+    
+    // Build dailyFeed from parsed data or use defaults
+    let dailyFeed: { ingredient: string; percentage: number; amountPerAnimal: string; totalAmount: string; }[] = [];
+    
+    if (parsedData && parsedData.dailyFeed && Array.isArray(parsedData.dailyFeed)) {
+      dailyFeed = parsedData.dailyFeed.map((feed: any) => {
+        const perAnimal = Number(feed.perAnimalKg) || 0;
+        const total = Math.round(perAnimal * livestock.count * 10) / 10;
+        return {
+          ingredient: feed.ingredient || "Неизвестно",
+          percentage: Number(feed.percentage) || 0,
+          amountPerAnimal: `${perAnimal} кг/день`,
+          totalAmount: `${total} кг/день (всего для ${livestock.count} голов)`,
+        };
+      });
+    }
+    
     if (dailyFeed.length === 0) {
       const defaultFeeds = [
         { ingredient: "Пшеница", percentage: 30, base: 4.5 },
@@ -145,61 +167,35 @@ export async function generateFeedingPlan(livestock: {
       })));
     }
 
-    // Normalize lines: trim and prepare for case-insensitive matching
-    const lines = text.split('\n')
-      .map(l => l.trim())
-      .filter(l => l.length > 5);
+    // Extract other fields from parsed JSON or use defaults
+    const feedingSchedule = (parsedData && Array.isArray(parsedData.feedingSchedule)) 
+      ? parsedData.feedingSchedule 
+      : [
+          "Кормить 2 раза в день",
+          "Утром в 6:00 и вечером в 18:00",
+          "Обеспечить постоянный доступ к воде",
+        ];
     
-    // FIRST: Extract cost-saving lines (highest priority) - case-insensitive
-    const costSavings = lines.filter(l => {
-      const lower = l.toLowerCase();
-      const hasCostKeyword = lower.includes('₸') || lower.includes('тенге') || 
-        lower.includes('экономи') || lower.includes('замен') || 
-        lower.includes('дешев') || lower.includes('альтернатив') ||
-        lower.includes('roi') || lower.includes('рентабельн') ||
-        lower.includes('выгод') || lower.includes('сберег');
-      const isNotPercentage = !l.match(/^\d+%/);
-      return hasCostKeyword && isNotPercentage;
-    }).slice(0, 5);
+    const nutritionTips = (parsedData && Array.isArray(parsedData.nutritionTips))
+      ? parsedData.nutritionTips
+      : [
+          "Следите за качеством кормов",
+          "Адаптируйте рацион по сезону",
+        ];
     
-    // SECOND: Extract feeding schedule (only from lines NOT in costSavings)
-    const costSavingsSet = new Set(costSavings);
-    const remainingLines = lines.filter(l => !costSavingsSet.has(l));
-    
-    const feedingSchedule = remainingLines.filter(l => {
-      const lower = l.toLowerCase();
-      const hasScheduleKeyword = lower.includes('раз') || lower.includes('график') || 
-        lower.includes('время') || (lower.includes('корм') && !l.match(/^\d+%/));
-      const noCost = !lower.includes('₸') && !lower.includes('тенге');
-      return hasScheduleKeyword && noCost;
-    }).slice(0, 4);
-    
-    // THIRD: Extract nutrition tips (only from remaining lines)
-    const scheduleSet = new Set(feedingSchedule);
-    const nutritionTips = remainingLines.filter(l => {
-      const lower = l.toLowerCase();
-      return !scheduleSet.has(l) &&
-        !l.match(/^\d+%/) &&
-        l.length > 15 &&
-        !lower.includes('₸') && !lower.includes('тенге');
-    }).slice(0, 3);
+    const costSavings = (parsedData && Array.isArray(parsedData.costSavings))
+      ? parsedData.costSavings
+      : [
+          "Используйте местные корма - дешевле импортных на 30-40%",
+          "Покупайте оптом для экономии 15-20%",
+        ];
     
     return {
-      summary: `План кормления для ${livestock.count} ${livestock.type}`,
+      summary: parsedData?.summary || `План кормления для ${livestock.count} ${livestock.type}`,
       dailyFeed,
-      feedingSchedule: feedingSchedule.length > 0 ? feedingSchedule : [
-        "Кормить 2 раза в день",
-        "Утром в 6:00 и вечером в 18:00",
-        "Обеспечить постоянный доступ к воде",
-      ],
-      nutritionTips: nutritionTips.length > 0 ? nutritionTips : [
-        "Следите за качеством кормов",
-        "Адаптируйте рацион по сезону",
-      ],
-      costSavings: costSavings.length > 0 ? costSavings : [
-        "Используйте местные корма - дешевле импортных на 30-40%",
-        "Покупайте оптом для экономии 15-20%",
-      ],
+      feedingSchedule,
+      nutritionTips,
+      costSavings,
     };
   } catch (error) {
     console.error("Ошибка создания плана кормления:", error);
@@ -394,13 +390,19 @@ export async function analyzeFertilizerData(field: {
 ТЕКУЩИЕ УДОБРЕНИЯ (введены пользователем):
 ${fertilizerList}
 
-Дай АНАЛИЗ в формате (КРАТКО, по пунктам):
-1. ЭФФЕКТИВНОСТЬ: правильно ли подобраны удобрения? достаточно ли? (2-3 пункта с оценкой)
-2. ЭКОНОМИЯ: как снизить затраты? (2-3 конкретных совета с ценами в ₸/га)
-3. ПРЕДУПРЕЖДЕНИЯ: что не так? передозировка? нехватка? (1-2 критичных момента)
-4. РЕКОМЕНДАЦИИ: что добавить или изменить? когда вносить? (2-3 практичных совета)
+ВАЖНО: Учитывай площадь поля (${field.area} га) при оценке количества удобрений.
+Норма внесения должна быть в кг/га, а общее количество = норма × ${field.area} га
 
-Каждый пункт - ОДНО короткое предложение с цифрами.`;
+ОБЯЗАТЕЛЬНО верни ответ ТОЛЬКО в формате JSON (без дополнительного текста):
+{
+  "summary": "Краткая оценка плана внесения удобрений",
+  "effectiveness": ["оценка 1 с цифрами", "оценка 2"],
+  "costOptimization": ["совет по экономии с ценами в ₸/га", "совет 2"],
+  "warnings": ["предупреждение 1", "предупреждение 2"],
+  "suggestions": ["рекомендация 1 с количеством кг/га", "рекомендация 2"]
+}
+
+Каждый пункт - ОДНО короткое предложение с цифрами и ценами в ₸.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-exp",
@@ -408,14 +410,33 @@ ${fertilizerList}
     });
 
     const text = response.text || "";
-    const lines = text.split('\n').filter(l => l.trim());
+    
+    // Parse JSON response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    let parsedData: any = null;
+    
+    if (jsonMatch) {
+      try {
+        parsedData = JSON.parse(jsonMatch[0]);
+      } catch (e) {
+        console.error("Error parsing JSON from AI:", e);
+      }
+    }
 
     return {
-      summary: `Анализ удобрений для поля ${field.name}`,
-      effectiveness: lines.filter(l => l.includes('эффект') || l.includes('правильно') || l.includes('подобран') || l.includes('достаточ')).slice(0, 3),
-      costOptimization: lines.filter(l => l.includes('эконом') || l.includes('затрат') || l.includes('дешевле') || l.includes('₸')).slice(0, 3),
-      warnings: lines.filter(l => l.includes('предупр') || l.includes('передоз') || l.includes('не хватает') || l.includes('опасн')).slice(0, 2),
-      suggestions: lines.filter(l => l.includes('рекоменд') || l.includes('добавить') || l.includes('изменить') || l.includes('внести')).slice(0, 3),
+      summary: parsedData?.summary || `Анализ удобрений для поля ${field.name}`,
+      effectiveness: (parsedData?.effectiveness && Array.isArray(parsedData.effectiveness)) 
+        ? parsedData.effectiveness 
+        : ["Проверьте соответствие нормам внесения"],
+      costOptimization: (parsedData?.costOptimization && Array.isArray(parsedData.costOptimization))
+        ? parsedData.costOptimization
+        : ["Используйте местные удобрения для экономии"],
+      warnings: (parsedData?.warnings && Array.isArray(parsedData.warnings))
+        ? parsedData.warnings
+        : [],
+      suggestions: (parsedData?.suggestions && Array.isArray(parsedData.suggestions))
+        ? parsedData.suggestions
+        : ["Проведите анализ почвы перед внесением удобрений"],
     };
   } catch (error) {
     console.error("Ошибка анализа удобрений:", error);
