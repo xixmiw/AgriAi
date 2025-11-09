@@ -68,8 +68,10 @@ ${userContext.livestock?.map(l => `- ${l.type}: ${l.count} голов`).join('\n
 
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-exp",
-      systemInstruction: systemPrompt,
       contents: conversationHistory,
+      config: {
+        systemInstruction: systemPrompt,
+      },
     });
 
     return response.text || "Извините, не могу ответить на этот вопрос.";
