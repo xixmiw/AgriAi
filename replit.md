@@ -34,11 +34,13 @@ AgriAI is a full-stack agricultural management application built with React, Exp
 - **Deployment**: Single server serving both API and frontend on port 5000
 
 ## Database Schema
-- **users**: User authentication (id, username, password, fullName, role)
+- **users**: User authentication (id, username, password, fullName, role, email, phone, location, company, avatarUrl)
   - Roles: farmer, agronomist, veterinarian, manager
+  - Profile fields: email, phone, location, company, avatarUrl
 - **fields**: Agricultural fields (id, userId, name, latitude, longitude, area, cropType)
   - Supports Google Maps DMS coordinate format: e.g., 54°52'59.2"N 69°14'13.8"E
 - **livestock**: Livestock management (id, userId, type, count)
+  - Individual animal health tracking with IoT simulation
 - **chat_messages**: AI chat history (id, userId, role, content, timestamp)
 
 ## Key Features
@@ -132,6 +134,27 @@ The application is configured for autoscale deployment:
 - Both frontend and backend are served from port 5000
 
 ## Recent Changes
+- **2025-11-09**: Complete UI/UX Overhaul - Removed all gradients in favor of clean borders with highlight effects
+  - Replaced gradient backgrounds with subtle border-left highlights
+  - Added smooth hover effects with border color transitions
+  - Implemented cleaner, more professional design throughout the application
+- **2025-11-09**: Enhanced Livestock Management System
+  - Added livestock count adjustment buttons (+/- controls) on each card
+  - Implemented dead animal tracking (1 per group with ~15-18°C body temp, 0 pulse)
+  - Added health statistics visualization showing healthy/warning/critical/dead counts
+  - Created IoT simulation for individual animal monitoring (temperature, heart rate, activity)
+  - Fixed critical bug where animal generation created count+1 animals instead of count
+- **2025-11-09**: Profile System Improvements
+  - Extended database schema with profile fields (email, phone, location, company, avatarUrl)
+  - Implemented fully functional profile update API with real database saves
+  - Added working profile customization form with all fields saving correctly
+- **2025-11-09**: Field Management Enhancements
+  - Added field edit buttons and dialogs for updating field information
+  - Improved field card UI with consistent styling
+- **2025-11-09**: Design Consistency
+  - Logo now appears on all pages via sidebar (not just login)
+  - Consistent card styling across all components
+  - Improved hover states and interactive elements
 - **2025-11-09**: Major UI/UX Redesign - Added modern gradients, animations, and hover effects
 - **2025-11-09**: Removed AI Recommendations and Simulation pages (consolidated into main dashboard)
 - **2025-11-09**: Added Profile customization page with user settings and statistics
