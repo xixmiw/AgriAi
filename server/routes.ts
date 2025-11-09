@@ -99,6 +99,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/profile", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const { fullName, email, phone, location, company, avatarUrl } = req.body;
+      const updated = await storage.updateUser(userId, {
+        fullName,
+        email,
+        phone,
+        location,
+        company,
+        avatarUrl,
+      });
+      if (!updated) {
+        return res.status(404).json({ error: "Пользователь не найден" });
+      }
+      const { password, ...userWithoutPassword } = updated;
+      res.json({ user: userWithoutPassword });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ error: "Ошибка при обновлении профиля" });
+    }
+  });
+
   app.get("/api/fields", requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;

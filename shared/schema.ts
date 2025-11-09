@@ -9,6 +9,11 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: text("role").notNull().default("farmer"),
   fullName: text("full_name"),
+  email: text("email"),
+  phone: text("phone"),
+  location: text("location"),
+  company: text("company"),
+  avatarUrl: text("avatar_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
