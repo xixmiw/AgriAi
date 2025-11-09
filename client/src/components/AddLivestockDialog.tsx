@@ -43,9 +43,11 @@ interface LivestockFeedingPlan {
     percentage: number;
     amountPerAnimal: string;
     totalAmount?: string;
+    cost?: string;
   }[];
   feedingSchedule: string[];
   nutritionTips: string[];
+  costSavings: string[];
 }
 
 interface AddLivestockDialogProps {
@@ -273,6 +275,26 @@ export default function AddLivestockDialog({ open, onOpenChange }: AddLivestockD
                         <li key={i} className="text-sm flex gap-2">
                           <span className="text-yellow-500">💡</span>
                           <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+
+              {feedingPlan.costSavings && feedingPlan.costSavings.length > 0 && (
+                <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base text-green-700 dark:text-green-400">
+                      💰 Экономия и альтернативы
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {feedingPlan.costSavings.map((saving, i) => (
+                        <li key={i} className="text-sm flex gap-2">
+                          <span className="text-green-600 dark:text-green-400">💵</span>
+                          <span className="text-green-800 dark:text-green-200 font-medium">{saving}</span>
                         </li>
                       ))}
                     </ul>

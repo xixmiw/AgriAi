@@ -217,7 +217,13 @@ export default function LivestockPage() {
   availableTypes.forEach(displayType => {
     const totalCount = groupedByDisplay[displayType].reduce((sum, l) => sum + l.count, 0);
     const animals = generateAnimalsForType(displayType, totalCount);
-    simulatedAnimals[displayType] = animals;
+    
+    const sortedAnimals = animals.sort((a, b) => {
+      const healthOrder = { 'critical': 0, 'warning': 1, 'healthy': 2 };
+      return healthOrder[a.health] - healthOrder[b.health];
+    });
+    
+    simulatedAnimals[displayType] = sortedAnimals;
     
     const tabValue = typeMapping[groupedByDisplay[displayType][0].type].tabValue;
     stats[tabValue] = {
