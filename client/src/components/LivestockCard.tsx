@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Trash2, Plus, Minus } from 'lucide-react';
+import { Trash2, Plus, Minus, UtensilsCrossed } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { ManageFeedsDialog } from './ManageFeedsDialog';
 
 interface LivestockCardProps {
   id: string;
@@ -37,6 +39,7 @@ export default function LivestockCard({
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [feedsDialogOpen, setFeedsDialogOpen] = useState(false);
 
   const updateCount = useMutation({
     mutationFn: async (newCount: number) => {
@@ -99,6 +102,15 @@ export default function LivestockCard({
           variant="outline"
           size="sm"
           className="flex-1"
+          onClick={() => setFeedsDialogOpen(true)}
+        >
+          <UtensilsCrossed className="h-4 w-4 mr-1" />
+          Корма
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1"
           onClick={() => console.log('Delete livestock:', id)}
           data-testid={`${testId}-delete`}
         >
@@ -106,6 +118,11 @@ export default function LivestockCard({
           {t('common.delete')}
         </Button>
       </CardFooter>
+      <ManageFeedsDialog
+        open={feedsDialogOpen}
+        onOpenChange={setFeedsDialogOpen}
+        livestockId={id}
+      />
     </Card>
   );
 }

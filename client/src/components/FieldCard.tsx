@@ -3,8 +3,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { MapPin, Trash2, BarChart3 } from 'lucide-react';
+import { MapPin, Trash2, BarChart3, Sprout } from 'lucide-react';
 import FieldSummaryDialog from './FieldSummaryDialog';
+import { ManageFertilizersDialog } from './ManageFertilizersDialog';
 
 interface FieldCardProps {
   id: string;
@@ -33,6 +34,7 @@ export default function FieldCard({
 }: FieldCardProps) {
   const { t } = useLanguage();
   const [showSummary, setShowSummary] = useState(false);
+  const [fertilizersDialogOpen, setFertilizersDialogOpen] = useState(false);
 
   return (
     <>
@@ -73,12 +75,21 @@ export default function FieldCard({
           <Button
             variant="outline"
             size="sm"
+            className="flex-1"
+            onClick={() => setFertilizersDialogOpen(true)}
+          >
+            <Sprout className="h-4 w-4 mr-1" />
+            Удобрения
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
             onClick={() => setShowSummary(true)}
             data-testid={`${testId}-summary`}
           >
             <BarChart3 className="h-4 w-4 mr-2" />
-            Полная сводка
+            Сводка
           </Button>
           <Button
             variant="outline"
@@ -98,6 +109,11 @@ export default function FieldCard({
         crop={crop}
         open={showSummary}
         onOpenChange={setShowSummary}
+      />
+      <ManageFertilizersDialog
+        open={fertilizersDialogOpen}
+        onOpenChange={setFertilizersDialogOpen}
+        fieldId={id}
       />
     </>
   );
