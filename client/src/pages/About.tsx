@@ -1,0 +1,99 @@
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sparkles, Cloud, Leaf, TrendingUp, Activity, Globe } from 'lucide-react';
+
+const features = [
+  {
+    icon: Sparkles,
+    titleKey: 'AI-анализ',
+    descKey: 'Gemini AI анализирует данные полей, погоду и дает персонализированные рекомендации по удобрениям, кормам и технике для максимальной эффективности.',
+  },
+  {
+    icon: Cloud,
+    titleKey: 'Погодный мониторинг',
+    descKey: 'Интеграция с OpenWeather API для получения актуальных данных о погоде в Казахстане и прогнозирования рисков.',
+  },
+  {
+    icon: Leaf,
+    titleKey: 'Управление полями',
+    descKey: 'Учет полей с координатами, размером и типом культур. AI-рекомендации по севообороту и удобрениям.',
+  },
+  {
+    icon: Activity,
+    titleKey: 'Мониторинг скота',
+    descKey: 'Симуляция здоровья животных через IoT датчики с отслеживанием температуры, пульса и общего состояния.',
+  },
+  {
+    icon: TrendingUp,
+    titleKey: 'Увеличение производства',
+    descKey: 'Инновационные комбинации кормов и удобрений для повышения надоев молока, производства шерсти и урожайности.',
+  },
+  {
+    icon: Globe,
+    titleKey: 'Многоязычность',
+    descKey: 'Поддержка русского, английского и казахского языков для удобства фермеров Казахстана.',
+  },
+];
+
+export default function About() {
+  const { t } = useLanguage();
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center max-w-3xl mx-auto">
+        <h1 className="text-4xl font-bold mb-4" data-testid="title-about">
+          {t('about.title')}
+        </h1>
+        <p className="text-xl text-muted-foreground">
+          {t('about.description')}
+        </p>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pt-8">
+        {features.map((feature, i) => (
+          <Card key={i} className="hover-elevate" data-testid={`feature-${i}`}>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary">
+                  <feature.icon className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <CardTitle className="text-lg">{feature.titleKey}</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{feature.descKey}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Технологии</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">AI Platform:</span>
+            <span className="font-medium">Google Gemini AI</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Weather API:</span>
+            <span className="font-medium">OpenWeatherMap</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Frontend:</span>
+            <span className="font-medium">React + TypeScript + Tailwind CSS</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Backend:</span>
+            <span className="font-medium">Node.js + Express + PostgreSQL</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Region:</span>
+            <span className="font-medium">🇰🇿 Kazakhstan</span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
