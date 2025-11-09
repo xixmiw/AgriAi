@@ -134,6 +134,30 @@ The application is configured for autoscale deployment:
 - Both frontend and backend are served from port 5000
 
 ## Recent Changes
+- **2025-11-09**: Настроен проект для Replit окружения
+  - Установлены все зависимости npm
+  - Создана база данных PostgreSQL и применена схема
+  - Настроены API ключи (GEMINI_API_KEY, OPENWEATHER_API_KEY)
+  - Настроен workflow для автоматического запуска на порту 5000
+  - Настроена deployment конфигурация для autoscale
+- **2025-11-09**: Упрощена языковая поддержка
+  - Удален переключатель языков из интерфейса
+  - Язык приложения зафиксирован на русском
+  - Сохранена инфраструктура переводов для будущего расширения
+- **2025-11-09**: Улучшен интерфейс и навигация
+  - Удален компонент статистики пользователя для упрощения
+  - Создана новая страница "Общий анализ" с комплексной оценкой хозяйства
+  - Добавлена навигация к странице "Общий анализ" в боковом меню
+- **2025-11-09**: Исправлены технические ошибки
+  - Исправлена интеграция с новым SDK Google Gemini (@google/genai)
+  - Обновлена конфигурация systemInstruction для совместимости
+- **2025-11-09**: Улучшен дизайн приложения
+  - Добавлены современные градиенты на карточки и заголовки
+  - Улучшена типографика (размеры шрифтов, spacing, tracking)
+  - Добавлены плавные hover эффекты на интерактивные элементы
+  - Улучшена цветовая дифференциация между компонентами
+  - Обновлены MetricCard, SoilDataCard с более современным стилем
+- **2025-11-09**: Enhanced Summary Dialogs with Data Visualizations
 - **2025-11-09**: Enhanced Summary Dialogs with Data Visualizations
   - Created FieldSummaryDialog with comprehensive charts (bar, radar, pie) showing all recommendations
   - Implemented LivestockSummaryDialog with health distribution charts, feeding plan visualizations, and vitals trends
