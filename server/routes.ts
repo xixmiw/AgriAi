@@ -8,13 +8,15 @@ import {
   insertUserSchema,
   loginUserSchema,
   insertChatMessageSchema,
+  insertFeedInventorySchema,
+  insertFertilizerInventorySchema,
   type User 
 } from "@shared/schema";
 import { z } from "zod";
 import { registerUser, loginUser } from "./auth";
 import { chatWithAI } from "./gemini";
 import { getWeatherByCoordinates } from "./weather";
-import { analyzeField, generateFeedingPlan, getFieldRecommendations } from "./ai-analysis";
+import { analyzeField, generateFeedingPlan, getFieldRecommendations, analyzeFeedingData, analyzeFertilizerData } from "./ai-analysis";
 
 declare module 'express-session' {
   interface SessionData {
@@ -237,7 +239,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Livestock not found" });
       }
       const validatedData = insertLivestockSchema.omit({ userId: true }).partial().parse(req.body);
+      
+      const oldCount = livestockItem.count;
+      const newCount = validatedData.count !== undefined ? validatedData.count : oldCount;
+      
       const updated = await storage.updateLivestock(req.params.id, validatedData);
+      
+      if (newCount < oldCount) {
+        try {
+          const feeds = await storage.getFeedsByLivestockId(req.params.id);
+          const feedUpdateErrors: string[] = [];
+          
+          for (const feed of feeds) {
+            const currentQuantity = parseFloat(feed.quantity);
+            if (isNaN(currentQuantity) || currentQuantity < 0) {
+              console.warn(`Invalid feed quantity for feed ${feed.id}: ${feed.quantity}, setting to 0`);
+              try {
+                await storage.updateFeed(feed.id, { quantity: "0" });
+              } catch (feedUpdateError) {
+                feedUpdateErrors.push(`Failed to zero invalid feed ${feed.id}`);
+              }
+              continue;
+            }
+            
+            let newQuantity: string;
+            if (newCount === 0) {
+              newQuantity = "0";
+            } else {
+              const ratio = newCount / oldCount;
+              newQuantity = (currentQuantity * ratio).toFixed(2);
+            }
+            
+            try {
+              await storage.updateFeed(feed.id, { quantity: newQuantity });
+            } catch (feedUpdateError) {
+              const errorMsg = `Failed to update feed ${feed.id}`;
+              console.error(errorMsg, feedUpdateError);
+              feedUpdateErrors.push(errorMsg);
+            }
+          }
+          
+          if (feedUpdateErrors.length > 0) {
+            console.error(`Feed adjustment failed, rolling back livestock update. Errors: ${feedUpdateErrors.join('; ')}`);
+            await storage.updateLivestock(req.params.id, { count: oldCount });
+            return res.status(500).json({ 
+              error: "Failed to adjust feed quantities after livestock count change. Operation rolled back.",
+              details: feedUpdateErrors 
+            });
+          }
+        } catch (feedAdjustmentError) {
+          console.error("Error adjusting feeds after livestock count change, rolling back:", feedAdjustmentError);
+          try {
+            await storage.updateLivestock(req.params.id, { count: oldCount });
+          } catch (rollbackError) {
+            console.error("CRITICAL: Failed to rollback livestock update:", rollbackError);
+          }
+          return res.status(500).json({ 
+            error: "Failed to adjust feed quantities after livestock count change. Attempted rollback.",
+            message: feedAdjustmentError instanceof Error ? feedAdjustmentError.message : "Unknown error"
+          });
+        }
+      }
+      
       res.json(updated);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -425,6 +488,245 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating feeding plan:", error);
       res.status(500).json({ error: "Ошибка при создании плана кормления" });
+    }
+  });
+
+  app.get("/api/livestock/:id/feeds", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const livestockItem = await storage.getLivestock(req.params.id);
+      
+      if (!livestockItem || livestockItem.userId !== userId) {
+        return res.status(404).json({ error: "Скот не найден" });
+      }
+      
+      const feeds = await storage.getFeedsByLivestockId(req.params.id);
+      res.json(feeds);
+    } catch (error) {
+      console.error("Error getting feeds:", error);
+      res.status(500).json({ error: "Ошибка при получении кормов" });
+    }
+  });
+
+  app.post("/api/livestock/:id/feeds", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const livestockItem = await storage.getLivestock(req.params.id);
+      
+      if (!livestockItem || livestockItem.userId !== userId) {
+        return res.status(404).json({ error: "Скот не найден" });
+      }
+      
+      const validatedData = insertFeedInventorySchema.parse({
+        ...req.body,
+        livestockId: req.params.id,
+      });
+      
+      const feed = await storage.createFeed(validatedData);
+      res.status(201).json(feed);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error creating feed:", error);
+      res.status(500).json({ error: "Ошибка при создании корма" });
+    }
+  });
+
+  app.put("/api/feeds/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const feed = await storage.getFeed(req.params.id);
+      
+      if (!feed) {
+        return res.status(404).json({ error: "Корм не найден" });
+      }
+      
+      const livestockItem = await storage.getLivestock(feed.livestockId);
+      if (!livestockItem || livestockItem.userId !== userId) {
+        return res.status(403).json({ error: "Доступ запрещен" });
+      }
+      
+      const updatedFeed = await storage.updateFeed(req.params.id, req.body);
+      res.json(updatedFeed);
+    } catch (error) {
+      console.error("Error updating feed:", error);
+      res.status(500).json({ error: "Ошибка при обновлении корма" });
+    }
+  });
+
+  app.delete("/api/feeds/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const feed = await storage.getFeed(req.params.id);
+      
+      if (!feed) {
+        return res.status(404).json({ error: "Корм не найден" });
+      }
+      
+      const livestockItem = await storage.getLivestock(feed.livestockId);
+      if (!livestockItem || livestockItem.userId !== userId) {
+        return res.status(403).json({ error: "Доступ запрещен" });
+      }
+      
+      await storage.deleteFeed(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting feed:", error);
+      res.status(500).json({ error: "Ошибка при удалении корма" });
+    }
+  });
+
+
+  app.get("/api/fields/:id/fertilizers", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const field = await storage.getField(req.params.id);
+      
+      if (!field || field.userId !== userId) {
+        return res.status(404).json({ error: "Поле не найдено" });
+      }
+      
+      const fertilizers = await storage.getFertilizersByFieldId(req.params.id);
+      res.json(fertilizers);
+    } catch (error) {
+      console.error("Error getting fertilizers:", error);
+      res.status(500).json({ error: "Ошибка при получении удобрений" });
+    }
+  });
+
+  app.post("/api/fields/:id/fertilizers", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const field = await storage.getField(req.params.id);
+      
+      if (!field || field.userId !== userId) {
+        return res.status(404).json({ error: "Поле не найдено" });
+      }
+      
+      const validatedData = insertFertilizerInventorySchema.parse({
+        ...req.body,
+        fieldId: req.params.id,
+      });
+      
+      const fertilizer = await storage.createFertilizer(validatedData);
+      res.status(201).json(fertilizer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error creating fertilizer:", error);
+      res.status(500).json({ error: "Ошибка при создании удобрения" });
+    }
+  });
+
+  app.put("/api/fertilizers/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const fertilizer = await storage.getFertilizer(req.params.id);
+      
+      if (!fertilizer) {
+        return res.status(404).json({ error: "Удобрение не найдено" });
+      }
+      
+      const field = await storage.getField(fertilizer.fieldId);
+      if (!field || field.userId !== userId) {
+        return res.status(403).json({ error: "Доступ запрещен" });
+      }
+      
+      const updatedFertilizer = await storage.updateFertilizer(req.params.id, req.body);
+      res.json(updatedFertilizer);
+    } catch (error) {
+      console.error("Error updating fertilizer:", error);
+      res.status(500).json({ error: "Ошибка при обновлении удобрения" });
+    }
+  });
+
+  app.delete("/api/fertilizers/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const fertilizer = await storage.getFertilizer(req.params.id);
+      
+      if (!fertilizer) {
+        return res.status(404).json({ error: "Удобрение не найдено" });
+      }
+      
+      const field = await storage.getField(fertilizer.fieldId);
+      if (!field || field.userId !== userId) {
+        return res.status(403).json({ error: "Доступ запрещен" });
+      }
+      
+      await storage.deleteFertilizer(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting fertilizer:", error);
+      res.status(500).json({ error: "Ошибка при удалении удобрения" });
+    }
+  });
+
+  app.post("/api/livestock/:id/analyze-feeds", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const livestockItem = await storage.getLivestock(req.params.id);
+      
+      if (!livestockItem || livestockItem.userId !== userId) {
+        return res.status(404).json({ error: "Скот не найден" });
+      }
+      
+      const feeds = await storage.getFeedsByLivestockId(req.params.id);
+      const feedsData = feeds.map(f => ({
+        name: f.name,
+        quantity: f.quantity.toString(),
+        unit: f.unit,
+        pricePerUnit: f.pricePerUnit?.toString(),
+      }));
+      
+      const analysis = await analyzeFeedingData(
+        {
+          type: livestockItem.type,
+          count: livestockItem.count,
+        },
+        feedsData
+      );
+      
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error analyzing feeds:", error);
+      res.status(500).json({ error: "Ошибка при анализе кормов" });
+    }
+  });
+
+  app.post("/api/fields/:id/analyze-fertilizers", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const field = await storage.getField(req.params.id);
+      
+      if (!field || field.userId !== userId) {
+        return res.status(404).json({ error: "Поле не найдено" });
+      }
+      
+      const fertilizers = await storage.getFertilizersByFieldId(req.params.id);
+      const fertilizersData = fertilizers.map(f => ({
+        name: f.name,
+        quantity: f.quantity.toString(),
+        unit: f.unit,
+        pricePerUnit: f.pricePerUnit?.toString(),
+        applicationDate: f.applicationDate?.toISOString(),
+      }));
+      
+      const analysis = await analyzeFertilizerData(
+        {
+          name: field.name,
+          cropType: field.cropType,
+          area: parseFloat(field.area),
+        },
+        fertilizersData
+      );
+      
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error analyzing fertilizers:", error);
+      res.status(500).json({ error: "Ошибка при анализе удобрений" });
     }
   });
 

@@ -10,10 +10,16 @@ import {
   type InsertLivestock,
   type ChatMessage,
   type InsertChatMessage,
+  type FeedInventory,
+  type InsertFeedInventory,
+  type FertilizerInventory,
+  type InsertFertilizerInventory,
   users,
   fields,
   livestock,
   chatMessages,
+  feedInventory,
+  fertilizerInventory,
 } from "@shared/schema";
 import ws from "ws";
 
@@ -41,6 +47,18 @@ export interface IStorage {
   getChatMessagesByUserId(userId: string, limit?: number): Promise<ChatMessage[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   deleteChatHistory(userId: string): Promise<boolean>;
+  
+  getFeedsByLivestockId(livestockId: string): Promise<FeedInventory[]>;
+  getFeed(id: string): Promise<FeedInventory | undefined>;
+  createFeed(feed: InsertFeedInventory): Promise<FeedInventory>;
+  updateFeed(id: string, feed: Partial<InsertFeedInventory>): Promise<FeedInventory | undefined>;
+  deleteFeed(id: string): Promise<boolean>;
+  
+  getFertilizersByFieldId(fieldId: string): Promise<FertilizerInventory[]>;
+  getFertilizer(id: string): Promise<FertilizerInventory | undefined>;
+  createFertilizer(fertilizer: InsertFertilizerInventory): Promise<FertilizerInventory>;
+  updateFertilizer(id: string, fertilizer: Partial<InsertFertilizerInventory>): Promise<FertilizerInventory | undefined>;
+  deleteFertilizer(id: string): Promise<boolean>;
 }
 
 export class DbStorage implements IStorage {
@@ -152,6 +170,62 @@ export class DbStorage implements IStorage {
 
   async deleteChatHistory(userId: string): Promise<boolean> {
     const result = await this.db.delete(chatMessages).where(eq(chatMessages.userId, userId)).returning();
+    return result.length > 0;
+  }
+
+  async getFeedsByLivestockId(livestockId: string): Promise<FeedInventory[]> {
+    return await this.db.select().from(feedInventory).where(eq(feedInventory.livestockId, livestockId));
+  }
+
+  async getFeed(id: string): Promise<FeedInventory | undefined> {
+    const result = await this.db.select().from(feedInventory).where(eq(feedInventory.id, id));
+    return result[0];
+  }
+
+  async createFeed(feed: InsertFeedInventory): Promise<FeedInventory> {
+    const result = await this.db.insert(feedInventory).values(feed).returning();
+    return result[0];
+  }
+
+  async updateFeed(id: string, feedData: Partial<InsertFeedInventory>): Promise<FeedInventory | undefined> {
+    const result = await this.db
+      .update(feedInventory)
+      .set(feedData)
+      .where(eq(feedInventory.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteFeed(id: string): Promise<boolean> {
+    const result = await this.db.delete(feedInventory).where(eq(feedInventory.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getFertilizersByFieldId(fieldId: string): Promise<FertilizerInventory[]> {
+    return await this.db.select().from(fertilizerInventory).where(eq(fertilizerInventory.fieldId, fieldId));
+  }
+
+  async getFertilizer(id: string): Promise<FertilizerInventory | undefined> {
+    const result = await this.db.select().from(fertilizerInventory).where(eq(fertilizerInventory.id, id));
+    return result[0];
+  }
+
+  async createFertilizer(fertilizer: InsertFertilizerInventory): Promise<FertilizerInventory> {
+    const result = await this.db.insert(fertilizerInventory).values(fertilizer).returning();
+    return result[0];
+  }
+
+  async updateFertilizer(id: string, fertilizerData: Partial<InsertFertilizerInventory>): Promise<FertilizerInventory | undefined> {
+    const result = await this.db
+      .update(fertilizerInventory)
+      .set(fertilizerData)
+      .where(eq(fertilizerInventory.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteFertilizer(id: string): Promise<boolean> {
+    const result = await this.db.delete(fertilizerInventory).where(eq(fertilizerInventory.id, id)).returning();
     return result.length > 0;
   }
 }

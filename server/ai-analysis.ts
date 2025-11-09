@@ -289,3 +289,142 @@ export async function getFieldRecommendations(field: {
     };
   }
 }
+
+export interface FeedAnalysis {
+  summary: string;
+  nutritionBalance: string[];
+  costOptimization: string[];
+  warnings: string[];
+  suggestions: string[];
+}
+
+export async function analyzeFeedingData(livestock: {
+  type: string;
+  count: number;
+}, feeds: Array<{ name: string; quantity: string; unit: string; pricePerUnit?: string }>): Promise<FeedAnalysis> {
+  if (feeds.length === 0) {
+    return {
+      summary: "Добавьте корма для анализа",
+      nutritionBalance: ["Введите данные о кормах для получения анализа"],
+      costOptimization: [],
+      warnings: ["Корма не добавлены! Добавьте корма для животных"],
+      suggestions: ["Начните с добавления основных кормов: пшеница, ячмень, сено"],
+    };
+  }
+
+  try {
+    const feedList = feeds.map(f => `${f.name}: ${f.quantity} ${f.unit}${f.pricePerUnit ? ` по ${f.pricePerUnit}₸/${f.unit}` : ''}`).join('\n');
+    
+    const prompt = `Ты опытный казахстанский ветеринар-зоотехник. ПРОАНАЛИЗИРУЙ текущий рацион кормления и дай ПРАКТИЧНЫЕ советы.
+
+Животные: ${livestock.count} голов ${livestock.type}
+
+ТЕКУЩИЕ КОРМА (введены пользователем):
+${feedList}
+
+Дай АНАЛИЗ в формате (КРАТКО, по пунктам):
+1. ОЦЕНКА БАЛАНСА: достаточно ли белка, энергии, витаминов? (2-3 пункта)
+2. ЭКОНОМИЯ: как снизить затраты без потери качества? (2-3 конкретных совета с ценами в ₸)
+3. ПРЕДУПРЕЖДЕНИЯ: что не так или чего не хватает? (1-2 критичных момента)
+4. РЕКОМЕНДАЦИИ: что добавить или изменить? (2-3 практичных совета)
+
+Каждый пункт - ОДНО короткое предложение с цифрами.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    });
+
+    const text = response.text || "";
+    const lines = text.split('\n').filter(l => l.trim());
+
+    return {
+      summary: `Анализ кормления для ${livestock.count} ${livestock.type}`,
+      nutritionBalance: lines.filter(l => l.includes('баланс') || l.includes('белок') || l.includes('энерг') || l.includes('витамин')).slice(0, 3),
+      costOptimization: lines.filter(l => l.includes('эконом') || l.includes('затрат') || l.includes('дешевле') || l.includes('₸')).slice(0, 3),
+      warnings: lines.filter(l => l.includes('предупр') || l.includes('не хватает') || l.includes('недостат') || l.includes('опасн')).slice(0, 2),
+      suggestions: lines.filter(l => l.includes('рекоменд') || l.includes('добавить') || l.includes('изменить') || l.includes('совет')).slice(0, 3),
+    };
+  } catch (error) {
+    console.error("Ошибка анализа кормов:", error);
+    return {
+      summary: `Корма добавлены для ${livestock.count} ${livestock.type}`,
+      nutritionBalance: ["Проверьте баланс белков и углеводов"],
+      costOptimization: ["Используйте местные корма для экономии"],
+      warnings: [],
+      suggestions: ["Обратитесь к ветеринару для детальной консультации"],
+    };
+  }
+}
+
+export interface FertilizerAnalysis {
+  summary: string;
+  effectiveness: string[];
+  costOptimization: string[];
+  warnings: string[];
+  suggestions: string[];
+}
+
+export async function analyzeFertilizerData(field: {
+  name: string;
+  cropType: string;
+  area: number;
+}, fertilizers: Array<{ name: string; quantity: string; unit: string; pricePerUnit?: string; applicationDate?: string }>): Promise<FertilizerAnalysis> {
+  if (fertilizers.length === 0) {
+    return {
+      summary: "Добавьте удобрения для анализа",
+      effectiveness: ["Введите данные об удобрениях для получения анализа"],
+      costOptimization: [],
+      warnings: ["Удобрения не добавлены! Добавьте удобрения для поля"],
+      suggestions: ["Начните с добавления основных удобрений: азот, фосфор, калий"],
+    };
+  }
+
+  try {
+    const fertilizerList = fertilizers.map(f => 
+      `${f.name}: ${f.quantity} ${f.unit}${f.pricePerUnit ? ` по ${f.pricePerUnit}₸/${f.unit}` : ''}${f.applicationDate ? `, внесение: ${new Date(f.applicationDate).toLocaleDateString('ru-RU')}` : ''}`
+    ).join('\n');
+    
+    const prompt = `Ты опытный казахстанский агроном. ПРОАНАЛИЗИРУЙ план внесения удобрений и дай ПРАКТИЧНЫЕ советы.
+
+Поле: ${field.name}
+Культура: ${field.cropType}
+Площадь: ${field.area} га
+
+ТЕКУЩИЕ УДОБРЕНИЯ (введены пользователем):
+${fertilizerList}
+
+Дай АНАЛИЗ в формате (КРАТКО, по пунктам):
+1. ЭФФЕКТИВНОСТЬ: правильно ли подобраны удобрения? достаточно ли? (2-3 пункта с оценкой)
+2. ЭКОНОМИЯ: как снизить затраты? (2-3 конкретных совета с ценами в ₸/га)
+3. ПРЕДУПРЕЖДЕНИЯ: что не так? передозировка? нехватка? (1-2 критичных момента)
+4. РЕКОМЕНДАЦИИ: что добавить или изменить? когда вносить? (2-3 практичных совета)
+
+Каждый пункт - ОДНО короткое предложение с цифрами.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    });
+
+    const text = response.text || "";
+    const lines = text.split('\n').filter(l => l.trim());
+
+    return {
+      summary: `Анализ удобрений для поля ${field.name}`,
+      effectiveness: lines.filter(l => l.includes('эффект') || l.includes('правильно') || l.includes('подобран') || l.includes('достаточ')).slice(0, 3),
+      costOptimization: lines.filter(l => l.includes('эконом') || l.includes('затрат') || l.includes('дешевле') || l.includes('₸')).slice(0, 3),
+      warnings: lines.filter(l => l.includes('предупр') || l.includes('передоз') || l.includes('не хватает') || l.includes('опасн')).slice(0, 2),
+      suggestions: lines.filter(l => l.includes('рекоменд') || l.includes('добавить') || l.includes('изменить') || l.includes('внести')).slice(0, 3),
+    };
+  } catch (error) {
+    console.error("Ошибка анализа удобрений:", error);
+    return {
+      summary: `Удобрения добавлены для поля ${field.name}`,
+      effectiveness: ["Проверьте соответствие нормам внесения"],
+      costOptimization: ["Используйте местные удобрения для экономии"],
+      warnings: [],
+      suggestions: ["Проведите анализ почвы перед внесением удобрений"],
+    };
+  }
+}
