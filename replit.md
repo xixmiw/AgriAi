@@ -134,6 +134,13 @@ The application is configured for autoscale deployment:
 - Both frontend and backend are served from port 5000
 
 ## Recent Changes
+- **2025-11-09**: Enhanced Summary Dialogs with Data Visualizations
+  - Created FieldSummaryDialog with comprehensive charts (bar, radar, pie) showing all recommendations
+  - Implemented LivestockSummaryDialog with health distribution charts, feeding plan visualizations, and vitals trends
+  - Fixed bug where feeding plans weren't refreshing when switching between livestock groups
+  - Removed edit buttons from field and livestock cards for cleaner interface
+  - Added rich gradients, shadows, and animations throughout the app for non-minimalist design
+  - Integrated Recharts library for professional data visualization
 - **2025-11-09**: Complete UI/UX Overhaul - Removed all gradients in favor of clean borders with highlight effects
   - Replaced gradient backgrounds with subtle border-left highlights
   - Added smooth hover effects with border color transitions
