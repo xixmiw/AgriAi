@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ManageFeedsDialogProps {
   open: boolean;
@@ -20,9 +21,18 @@ interface Feed {
   pricePerUnit?: string;
 }
 
+interface FeedAnalysis {
+  summary: string;
+  nutritionBalance: string[];
+  costOptimization: string[];
+  warnings: string[];
+  suggestions: string[];
+}
+
 export function ManageFeedsDialog({ open, onOpenChange, livestockId }: ManageFeedsDialogProps) {
   const queryClient = useQueryClient();
   const [newFeed, setNewFeed] = useState({ name: "", quantity: "", unit: "кг", pricePerUnit: "" });
+  const [analysis, setAnalysis] = useState<FeedAnalysis | null>(null);
 
   const { data: feeds = [] } = useQuery<Feed[]>({
     queryKey: [`/api/livestock/${livestockId}/feeds`],
@@ -43,6 +53,7 @@ export function ManageFeedsDialog({ open, onOpenChange, livestockId }: ManageFee
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/livestock/${livestockId}/feeds`] });
       setNewFeed({ name: "", quantity: "", unit: "кг", pricePerUnit: "" });
+      setAnalysis(null);
     },
   });
 
@@ -56,6 +67,22 @@ export function ManageFeedsDialog({ open, onOpenChange, livestockId }: ManageFee
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/livestock/${livestockId}/feeds`] });
+      setAnalysis(null);
+    },
+  });
+
+  const analyzeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/livestock/${livestockId}/analyze-feeds`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to analyze feeds");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setAnalysis(data);
     },
   });
 
@@ -139,6 +166,75 @@ export function ManageFeedsDialog({ open, onOpenChange, livestockId }: ManageFee
               ))
             )}
           </div>
+
+          <Button
+            onClick={() => analyzeMutation.mutate()}
+            disabled={feeds.length === 0 || analyzeMutation.isPending}
+            className="w-full"
+            variant="secondary"
+          >
+            {analyzeMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Анализ...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Анализ ИИ
+              </>
+            )}
+          </Button>
+
+          {analysis && (
+            <div className="space-y-3 mt-4">
+              <Alert>
+                <AlertTitle>Баланс питания</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc list-inside space-y-1">
+                    {analysis.nutritionBalance.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              <Alert>
+                <AlertTitle>Оптимизация затрат</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc list-inside space-y-1">
+                    {analysis.costOptimization.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              {analysis.warnings.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertTitle>Предупреждения</AlertTitle>
+                  <AlertDescription>
+                    <ul className="list-disc list-inside space-y-1">
+                      {analysis.warnings.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <Alert>
+                <AlertTitle>Рекомендации</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc list-inside space-y-1">
+                    {analysis.suggestions.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

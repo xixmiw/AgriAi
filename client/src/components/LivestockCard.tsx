@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Trash2, Plus, Minus, UtensilsCrossed } from 'lucide-react';
+import { Trash2, Plus, Minus, UtensilsCrossed, Skull } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -63,6 +63,28 @@ export default function LivestockCard({
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('DELETE', `/api/livestock/${id}`);
+      if (!res.ok) throw new Error('Failed to delete livestock');
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/livestock'] });
+      toast({
+        title: 'Успешно',
+        description: 'Группа животных удалена',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: error.message || 'Не удалось удалить',
+      });
+    },
+  });
+
   return (
     <Card className="hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/50" data-testid={testId}>
       <CardHeader className="border-b bg-accent/30">
@@ -97,7 +119,7 @@ export default function LivestockCard({
         </div>
         <p className="text-sm text-muted-foreground mt-1 text-center">{t('livestock.count')}</p>
       </CardContent>
-      <CardFooter className="gap-2">
+      <CardFooter className="gap-2 flex-wrap">
         <Button
           variant="outline"
           size="sm"
@@ -107,11 +129,32 @@ export default function LivestockCard({
           <UtensilsCrossed className="h-4 w-4 mr-1" />
           Корма
         </Button>
+        {count > 1 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 border-amber-500 text-amber-600 hover:bg-amber-50"
+            onClick={() => {
+              if (window.confirm('Утилизировать мертвое животное? Это уменьшит количество на 1.')) {
+                updateCount.mutate(count - 1);
+              }
+            }}
+            disabled={updateCount.isPending}
+          >
+            <Skull className="h-4 w-4 mr-1" />
+            Утилизация
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"
           className="flex-1"
-          onClick={() => console.log('Delete livestock:', id)}
+          onClick={() => {
+            if (window.confirm(`Удалить всю группу "${type}"?`)) {
+              deleteMutation.mutate();
+            }
+          }}
+          disabled={deleteMutation.isPending}
           data-testid={`${testId}-delete`}
         >
           <Trash2 className="h-4 w-4 mr-1" />

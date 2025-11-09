@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Send, Trash2, Bot, User } from "lucide-react";
+import { Loader2, Send, Trash2, Bot, User, Mic, MicOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 
 interface ChatMessage {
   id: string;
@@ -21,6 +22,28 @@ export default function AIChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition
+  } = useSpeechRecognition();
+  
+  useEffect(() => {
+    if (transcript) {
+      setInput(transcript);
+    }
+  }, [transcript]);
+  
+  const toggleListening = () => {
+    if (listening) {
+      SpeechRecognition.stopListening();
+    } else {
+      resetTranscript();
+      SpeechRecognition.startListening({ language: 'ru-RU', continuous: true });
+    }
+  };
 
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat/history"],
@@ -196,11 +219,22 @@ export default function AIChat() {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Напишите ваш вопрос..."
+              placeholder={listening ? "Слушаю..." : "Напишите ваш вопрос или используйте микрофон..."}
               disabled={isTyping}
               className="flex-1"
             />
-            <Button type="submit" disabled={!input.trim() || isTyping}>
+            {browserSupportsSpeechRecognition && (
+              <Button
+                type="button"
+                onClick={toggleListening}
+                disabled={isTyping}
+                variant={listening ? "destructive" : "outline"}
+                size="icon"
+              >
+                {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </Button>
+            )}
+            <Button type="submit" disabled={!input.trim() || isTyping} size="icon">
               <Send className="h-4 w-4" />
             </Button>
           </form>

@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ManageFertilizersDialogProps {
   open: boolean;
@@ -21,6 +22,14 @@ interface Fertilizer {
   applicationDate?: string;
 }
 
+interface FertilizerAnalysis {
+  summary: string;
+  effectiveness: string[];
+  costOptimization: string[];
+  warnings: string[];
+  suggestions: string[];
+}
+
 export function ManageFertilizersDialog({ open, onOpenChange, fieldId }: ManageFertilizersDialogProps) {
   const queryClient = useQueryClient();
   const [newFertilizer, setNewFertilizer] = useState({
@@ -30,6 +39,7 @@ export function ManageFertilizersDialog({ open, onOpenChange, fieldId }: ManageF
     pricePerUnit: "",
     applicationDate: "",
   });
+  const [analysis, setAnalysis] = useState<FertilizerAnalysis | null>(null);
 
   const { data: fertilizers = [] } = useQuery<Fertilizer[]>({
     queryKey: [`/api/fields/${fieldId}/fertilizers`],
@@ -50,6 +60,7 @@ export function ManageFertilizersDialog({ open, onOpenChange, fieldId }: ManageF
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/fields/${fieldId}/fertilizers`] });
       setNewFertilizer({ name: "", quantity: "", unit: "кг", pricePerUnit: "", applicationDate: "" });
+      setAnalysis(null);
     },
   });
 
@@ -63,6 +74,22 @@ export function ManageFertilizersDialog({ open, onOpenChange, fieldId }: ManageF
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/fields/${fieldId}/fertilizers`] });
+      setAnalysis(null);
+    },
+  });
+
+  const analyzeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/fields/${fieldId}/analyze-fertilizers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to analyze fertilizers");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setAnalysis(data);
     },
   });
 
@@ -158,6 +185,75 @@ export function ManageFertilizersDialog({ open, onOpenChange, fieldId }: ManageF
               ))
             )}
           </div>
+
+          <Button
+            onClick={() => analyzeMutation.mutate()}
+            disabled={fertilizers.length === 0 || analyzeMutation.isPending}
+            className="w-full"
+            variant="secondary"
+          >
+            {analyzeMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Анализ...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Анализ ИИ
+              </>
+            )}
+          </Button>
+
+          {analysis && (
+            <div className="space-y-3 mt-4">
+              <Alert>
+                <AlertTitle>Эффективность</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc list-inside space-y-1">
+                    {analysis.effectiveness.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              <Alert>
+                <AlertTitle>Оптимизация затрат</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc list-inside space-y-1">
+                    {analysis.costOptimization.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              {analysis.warnings.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertTitle>Предупреждения</AlertTitle>
+                  <AlertDescription>
+                    <ul className="list-disc list-inside space-y-1">
+                      {analysis.warnings.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <Alert>
+                <AlertTitle>Рекомендации</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc list-inside space-y-1">
+                    {analysis.suggestions.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
