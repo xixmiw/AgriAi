@@ -26,19 +26,26 @@ export default function Fields() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold" data-testid="title-fields">
-            {t('fields.title')}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Управление и мониторинг сельскохозяйственных полей
-          </p>
+      <div className="relative overflow-hidden rounded-xl p-6 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-teal-500/10 border-2 border-green-200 dark:border-green-800 shadow-lg">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgxNiwgMTg1LCAxMjksIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-40" />
+        <div className="relative flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent" data-testid="title-fields">
+              {t('fields.title')}
+            </h1>
+            <p className="text-muted-foreground mt-2 text-lg">
+              🌾 Управление и мониторинг сельскохозяйственных полей
+            </p>
+          </div>
+          <Button 
+            onClick={() => setIsAddDialogOpen(true)} 
+            data-testid="button-add-field"
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {t('fields.addNew')}
+          </Button>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-field">
-          <Plus className="h-4 w-4 mr-2" />
-          {t('fields.addNew')}
-        </Button>
       </div>
 
       {fields.length === 0 ? (

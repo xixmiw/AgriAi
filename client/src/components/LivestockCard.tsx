@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Edit, Trash2, Plus, Minus } from 'lucide-react';
+import { Trash2, Plus, Minus } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -99,19 +99,11 @@ export default function LivestockCard({
           variant="outline"
           size="sm"
           className="flex-1"
-          onClick={() => console.log('Edit livestock:', id)}
-          data-testid={`${testId}-edit`}
-        >
-          <Edit className="h-4 w-4 mr-1" />
-          {t('common.edit')}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
           onClick={() => console.log('Delete livestock:', id)}
           data-testid={`${testId}-delete`}
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-4 w-4 mr-1" />
+          {t('common.delete')}
         </Button>
       </CardFooter>
     </Card>

@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
 import MetricCard from '@/components/MetricCard';
-import WeatherWidget from '@/components/WeatherWidget';
 import SoilDataCard from '@/components/SoilDataCard';
 import UserStatsCard from '@/components/UserStatsCard';
 import { Wheat, Sprout, TrendingUp, Heart, Plus, Sparkles } from 'lucide-react';
@@ -130,15 +129,12 @@ export default function Dashboard() {
 
       <UserStatsCard />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-2">
         <div className="lg:col-span-1">
           <SoilDataCard 
             fieldName={fields[0]?.name}
             location={fields[0] ? `${fields[0].latitude}°, ${fields[0].longitude}°` : undefined}
           />
-        </div>
-        <div className="lg:col-span-1">
-          <WeatherWidget />
         </div>
         <div className="lg:col-span-1">
           <Card className="h-full border-2 hover:shadow-lg hover:border-purple-500/50 transition-all bg-purple-500/5">

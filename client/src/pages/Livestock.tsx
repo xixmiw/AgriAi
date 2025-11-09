@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, Heart, Thermometer, Zap, AlertCircle, Plus, Sprout } from 'lucide-react';
+import { Activity, Heart, Thermometer, Zap, AlertCircle, Plus, Sprout, BarChart3 } from 'lucide-react';
 import AddLivestockDialog from '@/components/AddLivestockDialog';
+import LivestockSummaryDialog from '@/components/LivestockSummaryDialog';
 import type { Livestock } from '@shared/schema';
 
 interface Animal {
@@ -147,6 +148,8 @@ function AnimalCard({ animal }: { animal: Animal }) {
 export default function LivestockPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('cows');
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [selectedLivestock, setSelectedLivestock] = useState<{ id: string; type: string; count: number; stats: any } | null>(null);
 
   const { data: livestock = [], isLoading } = useQuery<Livestock[]>({
     queryKey: ['/api/livestock'],
@@ -257,20 +260,26 @@ export default function LivestockPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Zap className="h-8 w-8 text-green-600" />
-            IoT Мониторинг Животных
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Система датчиков в реальном времени для отслеживания здоровья скота
-          </p>
+      <div className="relative overflow-hidden rounded-xl p-6 bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-purple-500/10 border-2 border-blue-200 dark:border-blue-800 shadow-lg">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSg1OSwgMTMwLCAyNDYsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-40" />
+        <div className="relative flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold flex items-center gap-2 bg-gradient-to-r from-blue-700 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+              <Zap className="h-10 w-10 text-blue-600 dark:text-blue-400 animate-pulse" />
+              IoT Мониторинг Животных
+            </h1>
+            <p className="text-muted-foreground mt-2 text-lg">
+              📡 Система датчиков в реальном времени для отслеживания здоровья скота
+            </p>
+          </div>
+          <Button 
+            onClick={() => setIsAddDialogOpen(true)}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Добавить животных
+          </Button>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Добавить животных
-        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -295,29 +304,51 @@ export default function LivestockPage() {
           const stat = stats[tabValue] || { total: 0, healthy: 0, warning: 0, critical: 0, dead: 0 };
           return (
             <TabsContent key={displayType} value={tabValue} className="space-y-4 mt-6">
-              <Card className="border-2">
+              <Card className="border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20 shadow-lg">
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-5 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-green-600">{stat.healthy}</div>
-                      <div className="text-xs text-muted-foreground">Здоровы</div>
+                    <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
+                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">{stat.healthy}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Здоровы</div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-yellow-600">{stat.warning}</div>
-                      <div className="text-xs text-muted-foreground">Возможно болен</div>
+                    <div className="p-3 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700">
+                      <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{stat.warning}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Возможно болен</div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-red-600">{stat.critical}</div>
-                      <div className="text-xs text-muted-foreground">Болен</div>
+                    <div className="p-3 rounded-lg bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700">
+                      <div className="text-3xl font-bold text-red-600 dark:text-red-400">{stat.critical}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Болен</div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-gray-600">{stat.dead}</div>
-                      <div className="text-xs text-muted-foreground">Мертв</div>
+                    <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-900/30 border border-gray-300 dark:border-gray-700">
+                      <div className="text-3xl font-bold text-gray-600 dark:text-gray-400">{stat.dead}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Мертв</div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-blue-600">{stat.total}</div>
-                      <div className="text-xs text-muted-foreground">Всего</div>
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 border-2 border-blue-400 dark:border-blue-600">
+                      <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{stat.total}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Всего</div>
                     </div>
+                  </div>
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                      onClick={() => {
+                        setSelectedLivestock({
+                          id: groupedByDisplay[displayType][0].id,
+                          type: displayType,
+                          count: stat.total,
+                          stats: {
+                            healthy: stat.healthy,
+                            warning: stat.warning,
+                            critical: stat.critical,
+                            dead: stat.dead,
+                          },
+                        });
+                        setSummaryOpen(true);
+                      }}
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Полная сводка по кормлению
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -335,6 +366,17 @@ export default function LivestockPage() {
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
       />
+
+      {selectedLivestock && (
+        <LivestockSummaryDialog
+          livestockId={selectedLivestock.id}
+          type={selectedLivestock.type}
+          count={selectedLivestock.count}
+          healthStats={selectedLivestock.stats}
+          open={summaryOpen}
+          onOpenChange={setSummaryOpen}
+        />
+      )}
 
       <footer className="text-center text-sm text-gray-500 pt-8 pb-4">
         © 2025 No Vibe Coding. Все права защищены.

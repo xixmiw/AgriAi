@@ -245,7 +245,7 @@ export default function AddFieldDialog({ open, onOpenChange }: AddFieldDialogPro
                       <SelectContent>
                         {cropTypes.map((crop) => (
                           <SelectItem key={crop.value} value={crop.value}>
-                            {crop.label[language]}
+                            {crop.label[language as keyof typeof crop.label] || crop.label.ru}
                           </SelectItem>
                         ))}
                       </SelectContent>

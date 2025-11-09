@@ -142,7 +142,7 @@ export default function AddLivestockDialog({ open, onOpenChange }: AddLivestockD
                       <SelectContent>
                         {livestockTypes.map((type) => (
                           <SelectItem key={type.value} value={type.value}>
-                            {type.label[language]}
+                            {type.label[language as keyof typeof type.label] || type.label.ru}
                           </SelectItem>
                         ))}
                       </SelectContent>
